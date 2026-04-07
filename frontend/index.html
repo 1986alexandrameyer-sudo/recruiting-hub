@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recruiting Hub — 7NXT</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --border: #E5E7EB;
+    --text: #111827;
+    --muted: #6B7280;
+    --indigo: #4F46E5;
+    --indigo-light: #EEF2FF;
+    --indigo-dark: #3730A3;
+    --green: #059669;
+    --green-light: #D1FAE5;
+    --amber: #D97706;
+    --amber-light: #FEF3C7;
+    --red: #DC2626;
+    --red-light: #FEE2E2;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* NAV */
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 60px; gap: 2rem; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
+  .nav-logo { font-weight: 700; font-size: 1.1rem; color: var(--text); letter-spacing: -.02em; }
+  .nav-logo span { color: var(--indigo); }
+  .stepper { display: flex; align-items: center; gap: 0; margin-left: auto; }
+  .step-item { display: flex; align-items: center; gap: .5rem; padding: .25rem .75rem; border-radius: 6px; font-size: .85rem; color: var(--muted); cursor: default; transition: all .2s; }
+  .step-item.active { color: var(--indigo); font-weight: 600; background: var(--indigo-light); }
+  .step-item.done { color: var(--green); }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor; display: grid; place-items: center; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+  .step-item.done .step-num { background: var(--green); border-color: var(--green); color: white; }
+  .step-item.done .step-num::after { content: '✓'; }
+  .step-item.active .step-num { background: var(--indigo); border-color: var(--indigo); color: white; }
+  .step-divider { width: 24px; height: 1px; background: var(--border); }
+
+  /* MAIN */
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
+  .card + .card { margin-top: 1rem; }
+  .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+  .badge { display: inline-flex; align-items: center; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+  .badge-indigo { background: var(--indigo-light); color: var(--indigo); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+
+  /* FORMS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: .35rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  input[type=text], textarea, select {
+    border: 1px solid var(--border); border-radius: 8px; padding: .6rem .8rem;
+    font-size: .9rem; font-family: inherit; color: var(--text); background: var(--surface);
+    transition: border-color .15s, box-shadow .15s; resize: vertical;
+  }
+  input[type=text]:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+  }
+  .tag-input-wrapper { border: 1px solid var(--border); border-radius: 8px; padding: .4rem .6rem; display: flex; flex-wrap: wrap; gap: .4rem; cursor: text; transition: border-color .15s, box-shadow .15s; min-height: 42px; }
+  .tag-input-wrapper:focus-within { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .tag { display: inline-flex; align-items: center; gap: .3rem; background: var(--indigo-light); color: var(--indigo); padding: .15rem .55rem .15rem .55rem; border-radius: 6px; font-size: .82rem; font-weight: 500; }
+  .tag-remove { cursor: pointer; opacity: .6; font-size: .9rem; line-height: 1; border: none; background: none; color: inherit; padding: 0; }
+  .tag-remove:hover { opacity: 1; }
+  .tag-input { border: none; outline: none; font-size: .85rem; flex: 1; min-width: 80px; background: transparent; }
+  .help { font-size: .78rem; color: var(--muted); }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1.2rem; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: var(--indigo); color: white; }
+  .btn-primary:hover:not(:disabled) { background: var(--indigo-dark); }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover:not(:disabled) { background: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--muted); border: none; }
+  .btn-ghost:hover { color: var(--text); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-lg { padding: .75rem 1.75rem; font-size: 1rem; }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover:not(:disabled) { background: #047857; }
+
+  /* ACTION BAR */
+  .action-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+
+  /* LOADING */
+  .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-block { text-align: center; padding: 3rem; }
+  .loading-block .spinner-lg { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--indigo); border-radius: 50%; animation: spin .9s linear infinite; margin: 0 auto 1rem; }
+  .loading-block p { color: var(--muted); font-size: .95rem; }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); gap: .25rem; margin-bottom: 1.5rem; }
+  .tab { padding: .6rem 1rem; font-size: .9rem; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); transition: all .15s; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: var(--indigo); border-bottom-color: var(--indigo); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* COMPETENCY CARDS */
+  .competency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .competency-card + .competency-card { margin-top: .75rem; }
+  .comp-header { padding: 1rem 1.25rem; display: flex; align-items: center; gap: .75rem; cursor: pointer; user-select: none; }
+  .comp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--indigo); flex-shrink: 0; }
+  .comp-name { font-weight: 600; font-size: .95rem; flex: 1; }
+  .comp-chevron { color: var(--muted); transition: transform .2s; font-size: .8rem; }
+  .comp-body { padding: 0 1.25rem 1.25rem; display: none; }
+  .competency-card.open .comp-body { display: block; }
+  .competency-card.open .comp-chevron { transform: rotate(90deg); }
+  .comp-definition { color: var(--muted); font-size: .9rem; margin-bottom: 1rem; line-height: 1.55; }
+  .signals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  @media (max-width: 640px) { .signals-grid { grid-template-columns: 1fr; } }
+  .signal-col h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+  .signal-col.weak h4 { color: var(--red); }
+  .signal-col.strong h4 { color: var(--green); }
+  .signal-list { list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+  .signal-list li { font-size: .85rem; line-height: 1.4; padding-left: 1rem; position: relative; color: var(--text); }
+  .signal-list li::before { content: '•'; position: absolute; left: 0; }
+  .signal-col.weak .signal-list li::before { color: var(--red); }
+  .signal-col.strong .signal-list li::before { color: var(--green); }
+
+  /* JD */
+  .jd-section { margin-bottom: 1.5rem; }
+  .jd-section h3 { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .6rem; }
+  .jd-section p { font-size: .92rem; line-height: 1.65; color: var(--text); }
+  .jd-section ul { padding-left: 0; list-style: none; }
+  .jd-section ul li { font-size: .9rem; line-height: 1.5; padding: .25rem 0 .25rem 1.25rem; position: relative; color: var(--text); }
+  .jd-section ul li::before { content: '→'; position: absolute; left: 0; color: var(--indigo); font-size: .8rem; top: .3rem; }
+  .jd-comp-item { background: var(--indigo-light); border-radius: 8px; padding: .75rem 1rem; margin-bottom: .5rem; }
+  .jd-comp-item strong { display: block; font-size: .88rem; font-weight: 700; color: var(--indigo); margin-bottom: .2rem; }
+  .jd-comp-item p { font-size: .88rem; color: #374151; line-height: 1.5; }
+
+  /* INTERVIEW GUIDE */
+  .interview-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .interview-section + .interview-section { margin-top: .75rem; }
+  .interview-header { padding: 1rem 1.25rem; cursor: pointer; display: flex; align-items: center; gap: .75rem; background: #FAFAFA; border-bottom: 1px solid var(--border); user-select: none; }
+  .interview-header.open { background: var(--indigo-light); }
+  .interview-body { padding: 1.25rem; display: none; }
+  .interview-section.open .interview-body { display: block; }
+  .interview-section.open .comp-chevron { transform: rotate(90deg); }
+  .q-block { margin-bottom: 1rem; }
+  .q-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .35rem; }
+  .q-text { font-size: .9rem; line-height: 1.5; color: var(--text); padding: .65rem .9rem; background: var(--bg); border-radius: 7px; border-left: 3px solid var(--indigo); }
+  .q-probes { margin-top: .5rem; }
+  .q-probes li { font-size: .85rem; color: var(--muted); padding: .2rem 0 .2rem 1rem; position: relative; }
+  .q-probes li::before { content: '↳'; position: absolute; left: 0; }
+  .answer-signals { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: 1rem; }
+  .answer-signal { border-radius: 7px; padding: .65rem .9rem; }
+  .answer-signal h5 { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; }
+  .answer-signal.weak { background: var(--red-light); }
+  .answer-signal.weak h5 { color: var(--red); }
+  .answer-signal.strong { background: var(--green-light); }
+  .answer-signal.strong h5 { color: var(--green); }
+  .answer-signal ul { list-style: none; }
+  .answer-signal ul li { font-size: .82rem; padding: .15rem 0; }
+
+  /* CANDIDATE EVALUATION */
+  .eval-sheet { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .eval-top { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; padding: 1.5rem; }
+  .eval-candidate { font-size: 1.4rem; font-weight: 700; }
+  .eval-meta { font-size: .85rem; opacity: .7; margin-top: .25rem; }
+  .eval-summary-grid { display: grid; grid-template-columns: 200px 1fr; gap: 2rem; padding: 1.5rem; align-items: center; border-bottom: 1px solid var(--border); }
+  @media (max-width: 640px) { .eval-summary-grid { grid-template-columns: 1fr; } }
+  .fit-score-box { text-align: center; }
+  .fit-score-big { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+  .fit-score-big.score-high { color: var(--green); }
+  .fit-score-big.score-mid { color: var(--amber); }
+  .fit-score-big.score-low { color: var(--red); }
+  .fit-score-label { font-size: .85rem; color: var(--muted); margin-top: .25rem; font-weight: 600; }
+  .fit-score-rec { margin-top: .5rem; }
+  .radar-box { height: 260px; display: flex; align-items: center; justify-content: center; }
+  .eval-body { padding: 1.5rem; }
+  .eval-section-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+  .eval-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .comp-eval-row { display: grid; grid-template-columns: 1.5fr 80px 2fr; gap: 1rem; align-items: start; padding: .85rem 0; border-bottom: 1px solid var(--border); }
+  .comp-eval-row:last-child { border-bottom: none; }
+  .comp-eval-name { font-weight: 600; font-size: .9rem; }
+  .comp-eval-score { display: flex; flex-direction: column; align-items: center; }
+  .score-circle { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 1rem; font-weight: 800; }
+  .score-circle.high { background: var(--green-light); color: var(--green); }
+  .score-circle.mid { background: var(--amber-light); color: var(--amber); }
+  .score-circle.low { background: var(--red-light); color: var(--red); }
+  .score-bar-track { height: 4px; border-radius: 99px; background: var(--border); margin-top: .4rem; width: 44px; }
+  .score-bar-fill { height: 100%; border-radius: 99px; }
+  .comp-eval-detail { font-size: .85rem; line-height: 1.5; }
+  .comp-eval-detail .evidence { color: var(--text); }
+  .comp-eval-detail .gap { color: var(--amber); margin-top: .3rem; font-size: .82rem; }
+  .comp-eval-detail .gap::before { content: '⚠ '; }
+  .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  @media (max-width: 640px) { .sc-grid { grid-template-columns: 1fr; } }
+  .sc-box { border-radius: 8px; padding: 1rem; }
+  .sc-box.strengths { background: var(--green-light); }
+  .sc-box.concerns { background: var(--red-light); }
+  .sc-box h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .6rem; }
+  .sc-box.strengths h4 { color: var(--green); }
+  .sc-box.concerns h4 { color: var(--red); }
+  .sc-box ul { list-style: none; }
+  .sc-box ul li { font-size: .88rem; padding: .2rem 0; line-height: 1.4; }
+  .sc-box ul li::before { margin-right: .4rem; }
+  .sc-box.strengths ul li::before { content: '✓'; color: var(--green); }
+  .sc-box.concerns ul li::before { content: '!'; color: var(--red); }
+  .recommendation-box { border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+  .rec-strong-hire { background: #D1FAE5; border-left: 4px solid var(--green); }
+  .rec-hire { background: #DBEAFE; border-left: 4px solid #3B82F6; }
+  .rec-maybe { background: var(--amber-light); border-left: 4px solid var(--amber); }
+  .rec-no-hire { background: var(--red-light); border-left: 4px solid var(--red); }
+  .rec-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .4rem; }
+  .rec-strong-hire .rec-label { color: var(--green); }
+  .rec-hire .rec-label { color: #2563EB; }
+  .rec-maybe .rec-label { color: var(--amber); }
+  .rec-no-hire .rec-label { color: var(--red); }
+  .rec-text { font-size: .9rem; line-height: 1.55; }
+
+  /* PAGE HEADERS */
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 { font-size: 1.4rem; font-weight: 700; }
+  .page-header p { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
+
+  /* MISC */
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+  .print-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; }
+  @media print { nav, .print-btn, .btn-outline, .btn-ghost { display: none !important; } body { background: white; } .eval-sheet { box-shadow: none; border: none; } }
+  .alert { padding: .75rem 1rem; border-radius: 8px; font-size: .88rem; margin-bottom: 1rem; }
+  .alert-error { background: var(--red-light); color: var(--red); border: 1px solid #FECACA; }
+  .summary-box { background: var(--indigo-light); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: .9rem; color: #374151; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Recruiting<span>Hub</span></div>
+  <div class="stepper">
+    <div class="step-item active" id="step1-indicator">
+      <div class="step-num">1</div>
+      <span>Briefing</span>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step-item" id="step2-indicator">
+      <div class="step-num">2</div>
+      <span>Outputs</span>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step-item" id="step3-indicator">
+      <div class="step-num">3</div>
+      <span>Evaluate</span>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ── STEP 1: BRIEFING ── -->
+<div class="page active" id="page-briefing">
+  <div class="page-header">
+    <h1>New Search — Briefing Sheet</h1>
+    <p>Fill in the role details. All three outputs will be generated from this single source of truth.</p>
+  </div>
+
+  <div id="briefing-error" class="alert alert-error" style="display:none"></div>
+
+  <form id="briefing-form">
+    <div class="card">
+      <div class="card-title">Role Details</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Job Title *</label>
+          <input type="text" id="f-role" placeholder="e.g. Head of Performance Marketing" required>
+        </div>
+        <div class="form-group">
+          <label>Department</label>
+          <input type="text" id="f-department" placeholder="e.g. Marketing">
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" id="f-location" placeholder="e.g. Berlin (hybrid)">
+        </div>
+        <div class="form-group">
+          <label>Reports To</label>
+          <input type="text" id="f-reports-to" placeholder="e.g. CMO">
+        </div>
+        <div class="form-group">
+          <label>Team Size</label>
+          <input type="text" id="f-team-size" placeholder="e.g. 3 direct reports">
+        </div>
+        <div class="form-group">
+          <label>Languages</label>
+          <div class="tag-input-wrapper" id="lang-wrapper">
+            <input class="tag-input" id="lang-input" placeholder="Type & press Enter…" autocomplete="off">
+          </div>
+          <span class="help">Add languages one by one</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role Context</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Company Context</label>
+          <textarea id="f-context" rows="3" placeholder="Brief description of the company, stage, culture, mission…"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Key Responsibilities</label>
+          <div class="tag-input-wrapper" id="resp-wrapper">
+            <input class="tag-input" id="resp-input" placeholder="Type responsibility & press Enter…" autocomplete="off">
+          </div>
+          <span class="help">Add 4-8 core responsibilities</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Requirements</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Must-Haves</label>
+          <div class="tag-input-wrapper" id="must-wrapper">
+            <input class="tag-input" id="must-input" placeholder="Type & press Enter…" autocomplete="off">
+          </div>
+          <span class="help">Non-negotiable requirements</span>
+        </div>
+        <div class="form-group">
+          <label>Nice-to-Haves</label>
+          <div class="tag-input-wrapper" id="nice-wrapper">
+            <input class="tag-input" id="nice-input" placeholder="Type & press Enter…" autocomplete="off">
+          </div>
+          <span class="help">Preferred but not required</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <span class="help">Generation takes ~20 seconds</span>
+      <button type="submit" class="btn btn-primary btn-lg" id="generate-btn">
+        Generate All Outputs →
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- ── STEP 2: OUTPUTS ── -->
+<div class="page" id="page-outputs">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <div class="page-header" style="margin-bottom:0">
+      <h1 id="outputs-role-title">Role Outputs</h1>
+      <p>Competencies are the single source of truth across all three documents</p>
+    </div>
+    <div style="display:flex; gap:.5rem;">
+      <button class="btn btn-outline" id="back-to-briefing">← Edit Briefing</button>
+      <button class="btn btn-green btn-lg" id="go-to-evaluate">Evaluate Candidate →</button>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="outputs-loading" class="card loading-block">
+    <div class="spinner-lg"></div>
+    <p id="loading-msg">Generating competency framework, job description, and interview guide…</p>
+  </div>
+
+  <!-- OUTPUTS CONTENT -->
+  <div id="outputs-content" style="display:none">
+    <div class="tabs">
+      <button class="tab active" data-tab="competencies">Competency Framework</button>
+      <button class="tab" data-tab="jd">Job Description</button>
+      <button class="tab" data-tab="interview">Interview Guide</button>
+    </div>
+
+    <!-- TAB: COMPETENCIES -->
+    <div class="tab-panel active" id="tab-competencies">
+      <div class="card" style="margin-bottom:.75rem; background: var(--indigo-light); border-color: #C7D2FE;">
+        <p style="font-size:.88rem; color:#4338CA; line-height:1.5;">
+          <strong>These competencies are the single source of truth.</strong>
+          They are embedded in the job description and form the sole basis for candidate evaluation.
+        </p>
+      </div>
+      <div id="competency-cards"></div>
+    </div>
+
+    <!-- TAB: JD -->
+    <div class="tab-panel" id="tab-jd">
+      <div class="card">
+        <div id="jd-content"></div>
+      </div>
+      <div style="margin-top:.75rem; text-align:right;">
+        <button class="btn btn-outline" onclick="copyJD()">Copy as Text</button>
+      </div>
+    </div>
+
+    <!-- TAB: INTERVIEW GUIDE -->
+    <div class="tab-panel" id="tab-interview">
+      <div class="card" style="margin-bottom:.75rem; background: var(--indigo-light); border-color: #C7D2FE;">
+        <p style="font-size:.88rem; color:#4338CA; line-height:1.5;">
+          One section per competency. Each section includes a behavioral anchor question, follow-ups, probes, and answer quality indicators.
+        </p>
+      </div>
+      <div id="interview-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 3: EVALUATE ── -->
+<div class="page" id="page-evaluate">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <div class="page-header" style="margin-bottom:0">
+      <h1>Candidate Evaluation</h1>
+      <p>Scored strictly against the generated competency framework</p>
+    </div>
+    <button class="btn btn-outline" id="back-to-outputs">← Back to Outputs</button>
+  </div>
+
+  <div id="eval-error" class="alert alert-error" style="display:none"></div>
+
+  <!-- INPUT -->
+  <div id="eval-input-section">
+    <div class="card">
+      <div class="card-title">Candidate Profile / Interview Notes</div>
+      <div class="form-group">
+        <label>Paste LinkedIn profile, CV excerpt, or interview notes</label>
+        <textarea id="candidate-text" rows="12" placeholder="Paste the candidate's LinkedIn profile text, CV, or interview notes here. The evaluation will be based exclusively on the competency framework generated in Step 2."></textarea>
+      </div>
+      <div class="action-bar">
+        <span class="help">Evaluation takes ~10 seconds</span>
+        <button class="btn btn-primary btn-lg" id="evaluate-btn">
+          Evaluate Candidate →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="eval-loading" class="card loading-block" style="display:none">
+    <div class="spinner-lg"></div>
+    <p>Evaluating against competency framework…</p>
+  </div>
+
+  <!-- RESULT -->
+  <div id="eval-result" style="display:none">
+    <div class="eval-sheet" id="evaluation-sheet">
+      <!-- Header -->
+      <div class="eval-top">
+        <div class="eval-candidate" id="eval-name">—</div>
+        <div class="eval-meta" id="eval-meta">—</div>
+      </div>
+
+      <!-- Score + Radar -->
+      <div class="eval-summary-grid">
+        <div class="fit-score-box">
+          <div class="fit-score-big" id="overall-score">—</div>
+          <div class="fit-score-label">Overall Fit Score / 10</div>
+          <div class="fit-score-rec" id="fit-rec-badge"></div>
+          <div style="margin-top:.75rem; font-size:.82rem; color:var(--muted); line-height:1.5;" id="eval-summary-text"></div>
+        </div>
+        <div class="radar-box">
+          <canvas id="radarChart" style="max-height:250px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Competency Details -->
+      <div class="eval-body">
+        <div class="eval-section-title">Competency Assessment</div>
+        <div id="comp-eval-rows"></div>
+
+        <div class="divider"></div>
+
+        <!-- Strengths & Concerns -->
+        <div class="eval-section-title">Strengths & Concerns</div>
+        <div class="sc-grid">
+          <div class="sc-box strengths">
+            <h4>Strengths</h4>
+            <ul id="eval-strengths"></ul>
+          </div>
+          <div class="sc-box concerns">
+            <h4>Concerns</h4>
+            <ul id="eval-concerns"></ul>
+          </div>
+        </div>
+
+        <!-- Recommendation -->
+        <div class="eval-section-title">Final Recommendation</div>
+        <div id="rec-box" class="recommendation-box">
+          <div class="rec-label" id="rec-label"></div>
+          <div class="rec-text" id="rec-text"></div>
+        </div>
+
+        <div style="display:flex; gap:.75rem; margin-top:1rem;">
+          <button class="btn btn-outline" onclick="window.print()">Print / Export PDF</button>
+          <button class="btn btn-ghost" id="eval-another">Evaluate Another Candidate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+const state = {
+  briefing: null,
+  generated: null, // { competencies, job_description, interview_guide }
+  radarChart: null,
+};
+
+const API = '';  // same origin
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  updateStepper(id);
+}
+
+function updateStepper(pageId) {
+  const steps = { 'page-briefing': 1, 'page-outputs': 2, 'page-evaluate': 3 };
+  const current = steps[pageId] || 1;
+  [1, 2, 3].forEach(n => {
+    const el = document.getElementById(`step${n}-indicator`);
+    el.classList.remove('active', 'done');
+    if (n < current) el.classList.add('done');
+    else if (n === current) el.classList.add('active');
+  });
+}
+
+// ── Tag inputs ─────────────────────────────────────────────────────────────────
+function setupTagInput(inputId, wrapperId) {
+  const input = document.getElementById(inputId);
+  const wrapper = document.getElementById(wrapperId);
+  const tags = [];
+
+  wrapper.addEventListener('click', () => input.focus());
+
+  input.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      addTag(input.value.trim());
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value && tags.length) {
+      removeTag(tags.length - 1);
+    }
+  });
+
+  function addTag(text) {
+    tags.push(text);
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${escapeHtml(text)}<button class="tag-remove" type="button">×</button>`;
+    tag.querySelector('.tag-remove').addEventListener('click', () => {
+      const idx = tags.indexOf(text);
+      if (idx > -1) removeTag(idx);
+    });
+    wrapper.insertBefore(tag, input);
+  }
+
+  function removeTag(idx) {
+    tags.splice(idx, 1);
+    const tagEls = wrapper.querySelectorAll('.tag');
+    if (tagEls[idx]) tagEls[idx].remove();
+  }
+
+  return { get: () => [...tags] };
+}
+
+const tagInputs = {
+  lang: setupTagInput('lang-input', 'lang-wrapper'),
+  resp: setupTagInput('resp-input', 'resp-wrapper'),
+  must: setupTagInput('must-input', 'must-wrapper'),
+  nice: setupTagInput('nice-input', 'nice-wrapper'),
+};
+
+// ── Form submission ────────────────────────────────────────────────────────────
+document.getElementById('briefing-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const role = document.getElementById('f-role').value.trim();
+  if (!role) return;
+
+  const briefing = {
+    role,
+    department: document.getElementById('f-department').value.trim(),
+    location: document.getElementById('f-location').value.trim(),
+    reports_to: document.getElementById('f-reports-to').value.trim(),
+    team_size: document.getElementById('f-team-size').value.trim(),
+    company_context: document.getElementById('f-context').value.trim(),
+    key_responsibilities: tagInputs.resp.get(),
+    must_haves: tagInputs.must.get(),
+    nice_to_haves: tagInputs.nice.get(),
+    languages: tagInputs.lang.get(),
+  };
+  state.briefing = briefing;
+
+  const btn = document.getElementById('generate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating…';
+  document.getElementById('briefing-error').style.display = 'none';
+
+  showPage('page-outputs');
+  document.getElementById('outputs-loading').style.display = 'block';
+  document.getElementById('outputs-content').style.display = 'none';
+  document.getElementById('outputs-role-title').textContent = role;
+
+  try {
+    const res = await fetch(`${API}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(briefing),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Generation failed');
+    }
+
+    // Stream response
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    const msgEl = document.getElementById('loading-msg');
+    const stages = ['Generating competency framework…', 'Writing job description…', 'Building interview guide…', 'Finalising outputs…'];
+    let stageIdx = 0;
+    const stageTimer = setInterval(() => { stageIdx = Math.min(stageIdx + 1, stages.length - 1); msgEl.textContent = stages[stageIdx]; }, 6000);
+
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const evt = JSON.parse(line.slice(6));
+        if (evt.error) throw new Error(evt.error);
+        if (evt.done && evt.result) {
+          clearInterval(stageTimer);
+          state.generated = evt.result;
+          renderOutputs(state.generated);
+        }
+      }
+    }
+    clearInterval(stageTimer);
+    if (!state.generated) throw new Error('No result received');
+  } catch (err) {
+    showPage('page-briefing');
+    document.getElementById('briefing-error').textContent = `Error: ${err.message}`;
+    document.getElementById('briefing-error').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Generate All Outputs →';
+  }
+});
+
+// ── Render outputs ─────────────────────────────────────────────────────────────
+function renderOutputs(data) {
+  document.getElementById('outputs-loading').style.display = 'none';
+  document.getElementById('outputs-content').style.display = 'block';
+  renderCompetencies(data.competencies);
+  renderJD(data.job_description, data.competencies);
+  renderInterviewGuide(data.interview_guide, data.competencies);
+}
+
+function renderCompetencies(competencies) {
+  const container = document.getElementById('competency-cards');
+  container.innerHTML = '';
+  competencies.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'competency-card' + (i === 0 ? ' open' : '');
+    card.innerHTML = `
+      <div class="comp-header" onclick="this.parentElement.classList.toggle('open')">
+        <div class="comp-dot" style="background:${compColor(i)}"></div>
+        <div class="comp-name">${escapeHtml(c.name)}</div>
+        <span class="comp-chevron">▶</span>
+      </div>
+      <div class="comp-body">
+        <p class="comp-definition">${escapeHtml(c.definition)}</p>
+        <div class="signals-grid">
+          <div class="signal-col weak">
+            <h4>Weak Signals</h4>
+            <ul class="signal-list">${(c.weak_signals||[]).map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ul>
+          </div>
+          <div class="signal-col strong">
+            <h4>Strong Signals</h4>
+            <ul class="signal-list">${(c.strong_signals||[]).map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ul>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderJD(jd, competencies) {
+  const el = document.getElementById('jd-content');
+  const compMap = Object.fromEntries((competencies||[]).map(c => [c.id, c]));
+
+  let html = `
+    <div class="jd-section">
+      <h3>Role Overview</h3>
+      <p style="font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:.75rem;">${escapeHtml(jd.tagline||'')}</p>
+      ${(jd.about_role||'').split('\n\n').map(p=>`<p style="margin-bottom:.75rem;">${escapeHtml(p)}</p>`).join('')}
+    </div>
+    <div class="jd-section">
+      <h3>Key Responsibilities</h3>
+      <ul>${(jd.responsibilities||[]).map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ul>
+    </div>
+    <div class="jd-section">
+      <h3>${escapeHtml((jd.competencies_section||{}).heading||'What We Look For')}</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:.85rem;">${escapeHtml((jd.competencies_section||{}).intro||'')}</p>
+      ${((jd.competencies_section||{}).items||[]).map((item,i)=>`
+        <div class="jd-comp-item">
+          <strong style="color:${compColor(i)};">${escapeHtml(item.name||'')}</strong>
+          <p>${escapeHtml(item.description||'')}</p>
+        </div>
+      `).join('')}
+    </div>
+    <div class="jd-section">
+      <h3>Requirements</h3>
+      <p style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:.4rem;">Must-Haves</p>
+      <ul>${(jd.must_haves||[]).map(m=>`<li>${escapeHtml(m)}</li>`).join('')}</ul>
+      ${(jd.nice_to_haves||[]).length ? `
+        <p style="font-size:.8rem;font-weight:700;color:var(--muted);margin:.75rem 0 .4rem;">Nice-to-Haves</p>
+        <ul>${jd.nice_to_haves.map(n=>`<li>${escapeHtml(n)}</li>`).join('')}</ul>
+      ` : ''}
+    </div>
+    ${(jd.what_we_offer||[]).length ? `
+    <div class="jd-section">
+      <h3>What We Offer</h3>
+      <ul>${jd.what_we_offer.map(o=>`<li>${escapeHtml(o)}</li>`).join('')}</ul>
+    </div>` : ''}
+  `;
+  el.innerHTML = html;
+}
+
+function renderInterviewGuide(guide, competencies) {
+  const container = document.getElementById('interview-content');
+  container.innerHTML = '';
+
+  if (guide.intro) {
+    const intro = document.createElement('div');
+    intro.className = 'card';
+    intro.style.marginBottom = '.75rem';
+    intro.innerHTML = `<p style="font-size:.9rem;line-height:1.6;color:var(--muted);">${escapeHtml(guide.intro)}</p>`;
+    container.appendChild(intro);
+  }
+
+  (guide.sections||[]).forEach((s, i) => {
+    const sec = document.createElement('div');
+    sec.className = 'interview-section' + (i === 0 ? ' open' : '');
+    sec.innerHTML = `
+      <div class="interview-header ${i===0?'open':''}" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')">
+        <div class="comp-dot" style="background:${compColor(i)}"></div>
+        <div class="comp-name">${escapeHtml(s.competency_name)}</div>
+        <span class="comp-chevron">▶</span>
+      </div>
+      <div class="interview-body">
+        <div class="q-block">
+          <div class="q-label">Opening Question</div>
+          <div class="q-text">${escapeHtml(s.opening_question||'')}</div>
+        </div>
+        ${(s.follow_up_questions||[]).length ? `
+        <div class="q-block">
+          <div class="q-label">Follow-up Questions</div>
+          <ul class="q-probes">${s.follow_up_questions.map(q=>`<li>${escapeHtml(q)}</li>`).join('')}</ul>
+        </div>` : ''}
+        ${(s.probe_questions||[]).length ? `
+        <div class="q-block">
+          <div class="q-label">Probe Questions</div>
+          <ul class="q-probes">${s.probe_questions.map(q=>`<li>${escapeHtml(q)}</li>`).join('')}</ul>
+        </div>` : ''}
+        <div class="answer-signals">
+          <div class="answer-signal weak">
+            <h5>Weak Answer</h5>
+            <ul>${(s.weak_answer_indicators||[]).map(a=>`<li>${escapeHtml(a)}</li>`).join('')}</ul>
+          </div>
+          <div class="answer-signal strong">
+            <h5>Strong Answer</h5>
+            <ul>${(s.strong_answer_indicators||[]).map(a=>`<li>${escapeHtml(a)}</li>`).join('')}</ul>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(sec);
+  });
+}
+
+// ── Evaluate ───────────────────────────────────────────────────────────────────
+document.getElementById('evaluate-btn').addEventListener('click', async () => {
+  const text = document.getElementById('candidate-text').value.trim();
+  if (!text) return;
+  if (!state.generated) return;
+
+  document.getElementById('eval-error').style.display = 'none';
+  document.getElementById('eval-input-section').style.display = 'none';
+  document.getElementById('eval-loading').style.display = 'block';
+  document.getElementById('eval-result').style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/api/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        candidate_text: text,
+        competencies: state.generated.competencies,
+        role: state.briefing?.role || '',
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Evaluation failed');
+    }
+    const evaluation = await res.json();
+    renderEvaluation(evaluation);
+  } catch (err) {
+    document.getElementById('eval-input-section').style.display = 'block';
+    document.getElementById('eval-error').textContent = `Error: ${err.message}`;
+    document.getElementById('eval-error').style.display = 'block';
+  } finally {
+    document.getElementById('eval-loading').style.display = 'none';
+  }
+});
+
+function renderEvaluation(ev) {
+  // Header
+  document.getElementById('eval-name').textContent = ev.candidate_name || 'Candidate';
+  document.getElementById('eval-meta').textContent =
+    `Evaluated for: ${state.briefing?.role || 'Role'} · ${new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'long',year:'numeric'})}`;
+
+  // Score
+  const score = parseFloat(ev.overall_fit_score) || 0;
+  const scoreEl = document.getElementById('overall-score');
+  scoreEl.textContent = score.toFixed(1);
+  scoreEl.className = 'fit-score-big ' + (score >= 7 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low');
+
+  // Recommendation badge
+  const recMap = {
+    strong_hire: { label: 'Strong Hire', cls: 'badge-green' },
+    hire: { label: 'Hire', cls: 'badge-indigo' },
+    maybe: { label: 'Maybe', cls: 'badge-amber' },
+    no_hire: { label: 'No Hire', cls: 'badge-red' },
+  };
+  const rec = recMap[ev.recommendation] || { label: ev.recommendation || '—', cls: 'badge-indigo' };
+  document.getElementById('fit-rec-badge').innerHTML =
+    `<span class="badge ${rec.cls}">${rec.label}</span>`;
+
+  document.getElementById('eval-summary-text').textContent = ev.summary || '';
+
+  // Radar chart
+  const scores = (ev.competency_scores || []);
+  const labels = scores.map(s => s.competency_name);
+  const values = scores.map(s => s.score);
+
+  if (state.radarChart) state.radarChart.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  state.radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: 'rgba(79,70,229,.15)',
+        borderColor: 'rgba(79,70,229,.8)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(79,70,229,1)',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 0, max: 10,
+          ticks: { stepSize: 2, font: { size: 10 } },
+          pointLabels: { font: { size: 10.5 }, color: '#374151' },
+          grid: { color: '#E5E7EB' },
+        }
+      },
+      plugins: { legend: { display: false } },
+    }
+  });
+
+  // Competency rows
+  const rowsEl = document.getElementById('comp-eval-rows');
+  rowsEl.innerHTML = '';
+  scores.forEach(s => {
+    const cls = s.score >= 7 ? 'high' : s.score >= 5 ? 'mid' : 'low';
+    const barColor = cls === 'high' ? 'var(--green)' : cls === 'mid' ? 'var(--amber)' : 'var(--red)';
+    const row = document.createElement('div');
+    row.className = 'comp-eval-row';
+    row.innerHTML = `
+      <div>
+        <div class="comp-eval-name">${escapeHtml(s.competency_name)}</div>
+      </div>
+      <div class="comp-eval-score">
+        <div class="score-circle ${cls}">${s.score}</div>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:${s.score*10}%;background:${barColor}"></div></div>
+      </div>
+      <div class="comp-eval-detail">
+        <div class="evidence">${escapeHtml(s.evidence||'')}</div>
+        ${s.gaps ? `<div class="gap">${escapeHtml(s.gaps)}</div>` : ''}
+      </div>
+    `;
+    rowsEl.appendChild(row);
+  });
+
+  // Strengths
+  const strengths = document.getElementById('eval-strengths');
+  strengths.innerHTML = (ev.strengths||[]).map(s=>`<li>${escapeHtml(s)}</li>`).join('');
+
+  // Concerns
+  const concerns = document.getElementById('eval-concerns');
+  concerns.innerHTML = (ev.concerns||[]).map(s=>`<li>${escapeHtml(s)}</li>`).join('');
+
+  // Recommendation box
+  const recBoxMap = {
+    strong_hire: 'rec-strong-hire',
+    hire: 'rec-hire',
+    maybe: 'rec-maybe',
+    no_hire: 'rec-no-hire',
+  };
+  const recBox = document.getElementById('rec-box');
+  recBox.className = `recommendation-box ${recBoxMap[ev.recommendation] || 'rec-hire'}`;
+  document.getElementById('rec-label').textContent = rec.label;
+  document.getElementById('rec-text').textContent = ev.recommendation_rationale || '';
+
+  document.getElementById('eval-result').style.display = 'block';
+}
+
+// ── Misc button wiring ─────────────────────────────────────────────────────────
+document.getElementById('back-to-briefing').addEventListener('click', () => showPage('page-briefing'));
+document.getElementById('go-to-evaluate').addEventListener('click', () => showPage('page-evaluate'));
+document.getElementById('back-to-outputs').addEventListener('click', () => showPage('page-outputs'));
+document.getElementById('eval-another').addEventListener('click', () => {
+  document.getElementById('candidate-text').value = '';
+  document.getElementById('eval-result').style.display = 'none';
+  document.getElementById('eval-input-section').style.display = 'block';
+});
+
+// ── Tabs ───────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const panelId = 'tab-' + tab.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(panelId).classList.add('active');
+  });
+});
+
+// ── Copy JD ────────────────────────────────────────────────────────────────────
+function copyJD() {
+  const jd = state.generated?.job_description;
+  if (!jd) return;
+  const lines = [
+    jd.tagline || '',
+    '',
+    jd.about_role || '',
+    '',
+    'KEY RESPONSIBILITIES',
+    ...(jd.responsibilities||[]).map(r=>`• ${r}`),
+    '',
+    (jd.competencies_section?.heading || 'WHAT WE LOOK FOR'),
+    jd.competencies_section?.intro || '',
+    ...(jd.competencies_section?.items||[]).map(i=>`\n${i.name}\n${i.description}`),
+    '',
+    'REQUIREMENTS',
+    ...(jd.must_haves||[]).map(m=>`• ${m}`),
+    ...(jd.nice_to_haves||[]).length ? ['', 'Nice-to-haves:', ...(jd.nice_to_haves||[]).map(n=>`• ${n}`)] : [],
+    ...(jd.what_we_offer||[]).length ? ['', 'WHAT WE OFFER', ...(jd.what_we_offer||[]).map(o=>`• ${o}`)] : [],
+  ];
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.querySelector('[onclick="copyJD()"]');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy as Text', 2000);
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const COLORS = ['#4F46E5','#059669','#D97706','#DC2626','#7C3AED','#0284C7'];
+function compColor(i) { return COLORS[i % COLORS.length]; }
+
+function escapeHtml(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
